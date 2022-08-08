@@ -1,0 +1,386 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="timeline">
+      {% if user %}
+        <div>
+          <form id="twit-form" action="/post" method="post" enctype="multipart/form-data">
+            <div>텍스트</div>
+            <div class="input-group">
+              <textarea id="twit" name="content" maxlength="140"></textarea>
+            </div>
+            <div>종류</div>
+            <div class="input-group">
+                <textarea id="type" name="type" maxlength="140"></textarea>
+            </div>
+            <div>디스트리뷰터</div>
+            <div class="input-group">
+                <textarea id="Distributor" name="Distributor" maxlength="140"></textarea>
+            </div>
+            <div>출처</div>
+            <div class="input-group">
+                <textarea id="publisher" name="publisher" maxlength="140"></textarea>
+            </div>
+            <div>썸네일이미지</div>
+            <div class="input-group">
+                <textarea id="Thumbnail_image" name="Thumbnail_image" maxlength="140"></textarea>
+            </div>
+            <div>유저URL</div>
+            <div class="input-group">
+                <textarea id="User_url" name="User_url" maxlength="140"></textarea>
+            </div>
+            <div>제목</div>
+            <div class="input-group">
+                <textarea id="Title" name="Title" maxlength="140"></textarea>
+            </div>
+            <div class="img-preview">
+              <img id="img-preview" src="" style="display: none;" width="250" alt="미리보기">
+              <input id="img-url" type="hidden" name="url">
+            </div>
+            <div>
+              <label id="img-label" for="img">사진 업로드</label>
+              <input id="img" type="file" accept="image/*">
+              <button id="twit-btn" type="submit" class="btn">짹짹</button>
+            </div>
+          </form>
+        </div>
+      {% endif %}
+      <div class="twits">
+        <form id="hashtag-form" action="/hashtag">
+          <input type="text" name="hashtag" placeholder="태그 검색">
+          <button class="btn">검색</button>
+        </form>
+        <!-- 전체 목록을 테이블 형식으로 출력한다. -->
+        <div class="twit">
+          <table style="border: 1px black solid; margin-top: 10px">
+            <thead>
+            <tr>
+              <th width="5%">UserId</th>
+              <th width="5%">Type</th>
+              <th width="10%">Distributor</th>
+              <th width="5%">Publisher</th>
+              <th width="5%">Thumbnail_image</th>
+              <th width="10%">User_url</th>
+              <th width="15%">Title</th>
+              <th width="15%">SubTitle</th>
+              <th width="10%">가져오기</th>
+              <th width="20%">Comment</th>
+              <th width="10%">좋아요</th>
+              <th width="10%">싫어요</th>
+
+            </tr>
+            </thead>
+            <tbody style="text-align: center">
+              {% for twit in twits %}
+                <tr>
+                  <td> {{twit.User.id}} </td>
+                  <td> {{twit.Type}} </td>
+                  <td> {{twit.Distributor}} </td>
+                  <td> {{twit.Publisher}} </td>
+                  <td> {{twit.Thumbnail_image}} </td>
+                  <td> {{twit.User_url}} </td>
+                  <td> {{twit.Title}} </td>
+                  <td>
+                    <!-- 내글일 경우 부제목을 수정할 수 있게 텍스트박스를 출력시킨다. -->
+                    {% if loginUserId != null and twit.User.id === loginUserId %}
+                      <form action="/post/subTitle/update" method="post">
+                        <input type="text" name="subTitle" value="{{twit.Subtitle}}" />
+                        <input type="hidden" name="id" value="{{twit.id}}"/>
+                        <button type="submit">수정</button>
+                      </form>
+                    {% endif %}
+                    <!-- 내글이 아닐경우에는 텍스트만 보여지게한다. -->
+                    {% if loginUserId == null or twit.User.id !== loginUserId %}
+                      {{twit.Subtitle}}
+                    {% endif %}
+                  </td>
+                  <td>
+                    <!-- 내가 작성한 글이 아닐때만 글 가져오기 가능 -->
+                    {% if loginUserId != null and twit.User.id !== loginUserId %}
+                    <button onclick="copyPosts({{twit.id}})">가져오기</button>
+                    {% endif %}
+                  </td>
+                  <!-- 댓글 쓰기 추가 -->
+                  <td>
+                    <!-- /post/comment 로 댓글 등록 요청을 보낸다. -->
+                    <form method="post" action="/post/comment">
+                      <!-- 댓글 다는 게시물 아이디 -->
+                      <input type="hidden" name="postId" value="{{twit.id}}" />
+                      <!-- 댓글 내용 -->
+                      <input type="text" name="comment" />
+                      <button type="submit">댓글 작성</button>
+                    </form>
+                  </td>
+                  <td>
+                    <!-- 로그인 하지 않은 사용자는 좋아요/싫어요 버튼 출력 안함 -->
+                    {% if loginUserId != null %}
+                      <!-- 좋아요 선택하지 않았을시 버튼 출력 -->
+                      {% if twit.Likes != null and twit.Likes[0].like != true %}
+                        <button onclick="likePost({{twit.id}}, true)">좋아요</button>
+                      {% endif %}
+                      <!-- 좋아요 선택했었을시 체크 표시만 한다. -->
+                      {% if twit.Likes[0].like == true %}
+                        <button onclick="deleteLike({{twit.id}})">취소</button>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                  <td>
+                    <!-- 로그인 하지 않은 사용자는 좋아요/싫어요 버튼 출력 안함 -->
+                    {% if loginUserId != null %}
+                      <!-- 싫어요 선택하지 않았을시 버튼 출력 -->
+                      {% if twit.Likes != null and twit.Likes[0].like != false %}
+                      <button onclick="likePost({{twit.id}}, false)">싫어요</button>
+                      {% endif %}
+                      <!-- 싫어요 선택했었을시 체크 표시만 한다. -->
+                      {% if twit.Likes[0].like == false %}
+                      <button onclick="deleteLike({{twit.id}})">취소</button>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                  
+                </tr>
+                <!-- 댓글 구역 -->
+                <!-- 댓글에 코멘트가 있을경우 코멘트를 넣을 테이블을 생성한다. -->
+                {% if twit.Comments != null and twit.Comments.length > 0 %}
+                <tr>
+                  <td colspan="8">
+                    <table style="margin-left: 5%; padding: 10px; border: 1px red solid">
+                      <thead>
+                        <th width="5%">id</th>
+                        <th width="30%">content</th>
+                        <th width="20%">userId</th>
+                        <th width="10%">삭제</th>
+                        <th width="30%">대댓글 작성</th>
+                      </thead>
+                      <tbody>
+                      <!-- 게시물의 댓글만큼 loop 돌면서 댓글을 출력한다. -->
+                      {% for comment in twit.Comments %}
+                        <tr>
+                          <td>{{comment.id}}</td>
+                          <td>{{comment.content}}</td>
+                          <td>{{comment.User.userid}}</td>
+                          <td>
+                            <!-- 코멘트가 내글이거나 코멘트 달리 글 자체가 내글이면 삭제가능 -->
+                            {% if loginUserId === comment.userId or loginUserId === twit.User.id %}
+                            <button onclick="deleteComment({{comment.id}})">삭제</button>
+                            {% endif %}
+                          </td>
+                          <!-- 대댓글 작성 -->
+                          <td>
+                            <!-- /post/comment/child 으로 대댓글 등록 요청을 보낸다. -->
+                            <form method="post" action="/post/comment/child">
+                              <!-- 댓글 다는 게시물 아이디 -->
+                              <input type="hidden" name="postId" value="{{twit.id}}" />
+                              <!-- 대댓글다는 댓글 아이디 -->
+                              <input type="hidden" name="parentCommentId" value="{{comment.id}}" />
+                              <!-- 댓글 내용 -->
+                              <input type="text" name="comment" />
+                              <button type="submit">대댓글 작성</button>
+                            </form>
+                          </td>
+                        </tr>
+                      <!-- 대댓글 구역 -->
+                      <!-- 댓글에 대댓글이 있을시 아래를 출력한다. -->
+                        {% if comment.Comments != null and comment.Comments.length > 0 %}
+                        <tr>
+                          <td colspan="5">
+                            <table style="margin-left: 5%; padding: 10px; border: 1px blue solid">
+                              <thead>
+                              <th width="10%">id</th>
+                              <th width="50%">content</th>
+                              <th width="30%">userId</th>
+                              <th width="10%">삭제</th>
+                              </thead>
+                              <tbody>
+                              <!-- 대댓글 만큼 loop돌면서 출력한다. -->
+                              {% for childComment in comment.Comments %}
+                              <tr>
+                                <td>{{childComment.id}}</td>
+                                <td>{{childComment.content}}</td>
+                                <td>{{childComment.User.userid}}</td>
+                                <td>
+                                  <!-- 대댓글이 내글이거나 코멘트 달리 글 자체가 내글이면 삭제가능 -->
+                                  {% if loginUserId === childComment.userId or loginUserId === twit.User.id %}
+                                  <button onclick="deleteComment({{childComment.id}})">삭제</button>
+                                  {% endif %}
+                                </td>
+                              </tr>
+                              {% endfor %}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        {% endif %}
+                      <!-- 대댓글 구역 -->
+                      {% endfor %}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                {% endif %}
+                <!--// 댓글 구역 -->
+
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <!-- 원래 코드 -->
+       <!-- {% for twit in twits %} -->
+         <!-- <div class="twit"> -->
+           <!-- <input type="hidden" value="{{twit.User.id}}" class="twit-user-id">
+           <input type="hidden" value="{{twit.id}}" class="twit-id">
+           <div class="twit-author">{{twit.User.nick}}</div>
+           {% if not followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
+             <button class="twit-follow">팔로우하기</button>
+           {% endif %}
+           <div class="twit-content">{{twit.content}}</div>
+           {% if twit.img %}
+             <div class="twit-img"><img 
+              src="{{twit.img}}" 
+              onerror="this.src = this.src.replace(/\/thumb\//, '/original/');"
+              alt="섬네일"></div> -->
+           <!-- {% endif %}
+         </div> -->
+        {% endfor %}
+      </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+  <script>
+    if (document.getElementById('img')) {
+      document.getElementById('img').addEventListener('change', function(e) {
+        const formData = new FormData();
+        console.log(this, this.files);
+        formData.append('img', this.files[0]);
+        axios.post('/post/img', formData)
+          .then((res) => {
+            document.getElementById('img-url').value = res.data.url;
+            document.getElementById('img-preview').src = res.data.url;
+            document.getElementById('img-preview').style.display = 'inline';
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      });
+    }
+    document.querySelectorAll('.twit-follow').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        const myId = document.querySelector('#my-id');
+        if (myId) {
+          const userId = tag.parentNode.querySelector('.twit-user-id').value;
+          if (userId !== myId.value) {
+            if (confirm('팔로잉하시겠습니까?')) {
+              axios.post(`/user/${userId}/follow`)
+                .then(() => {
+                  location.reload();
+                })
+                .catch((err) => {
+                  console.error(err);
+                });
+            }
+          }
+        }
+      });
+    });
+
+    /**
+     * 코멘트 삭제 함수
+     * @param commentId 삭제할 코멘트아이디
+     */
+    function deleteComment(commentId) {
+      // /post/comment/delete 에 commentId를 넘겨 댓글 삭제를 요청한다.
+      axios.post('/post/comment/delete', {
+        commentId, commentId
+      })
+      .then((res) => {
+        if (res.status === 200) { // 서버 요청이 정상적으로 되었으면 페이지 새로고침한다.
+          location.reload();
+        } else { // 서버 요청이 정상 응답하지 않는다면 경고창을 띄운다.
+          alert('코멘트를 실패하였습니다. 재시도해주세요.');
+        }
+      })
+      .catch(error => {
+        // 에러 발생시 에러 데이터를 가져온다.
+        const errorData = error.response.data;
+        // 에러 데이터에 메시지가 존재하면 메시지를 경고창에 출력하고 없으면 기본 메시지를 출력한다.
+        if (errorData != null && errorData.message != null) {
+          alert(errorData.message);
+        } else {
+          alert('코멘트를 실패하였습니다. 재시도해주세요.');
+        }
+      });
+    }
+
+    function copyPosts(postId) {
+      axios.post('/post/copy', {
+        postId: postId
+      })
+      .then((res) => {
+        if (res.status === 200) { // 서버 요청이 정상적으로 되었으면 페이지 새로고침한다.
+          location.href = '/mycontents';
+        } else { // 서버 요청이 정상 응답하지 않는다면 경고창을 띄운다.
+          alert('글 가져오기를 실패하였습니다. 재시도해주세요.');
+        }
+      })
+      .catch(error => {
+        // 에러 발생시 에러 데이터를 가져온다.
+        const errorData = error.response.data;
+        // 에러 데이터에 메시지가 존재하면 메시지를 경고창에 출력하고 없으면 기본 메시지를 출력한다.
+        if (errorData != null && errorData.message != null) {
+          alert(errorData.message);
+        } else {
+          alert('글 가져오기를 실패하였습니다. 재시도해주세요.');
+        }
+      });
+    }
+
+    function likePost(postId, like) {
+      axios.post('/post/like', {
+        postId: postId,
+        like: like
+      })
+      .then((res) => {
+        if (res.status === 200) { // 서버 요청이 정상적으로 되었으면 페이지 새로고침한다.
+          location.reload();
+        } else { // 서버 요청이 정상 응답하지 않는다면 경고창을 띄운다.
+          alert('좋아요 저장을 실패하였습니다. 재시도해주세요.');
+        }
+      })
+      .catch(error => {
+        // 에러 발생시 에러 데이터를 가져온다.
+        const errorData = error.response.data;
+        // 에러 데이터에 메시지가 존재하면 메시지를 경고창에 출력하고 없으면 기본 메시지를 출력한다.
+        if (errorData != null && errorData.message != null) {
+          alert(errorData.message);
+        } else {
+          alert('좋아요 저장을 실패하였습니다. 재시도해주세요.');
+        }
+      });
+    }
+
+    function deleteLike(postId) {
+      axios.post('/post/like/delete', {
+        postId: postId
+      })
+      .then((res) => {
+        if (res.status === 200) { // 서버 요청이 정상적으로 되었으면 페이지 새로고침한다.
+          location.reload();
+        } else { // 서버 요청이 정상 응답하지 않는다면 경고창을 띄운다.
+          alert('좋아요/싫어요 취소를 실패하였습니다.');
+        }
+      })
+      .catch(error => {
+        // 에러 발생시 에러 데이터를 가져온다.
+        const errorData = error.response.data;
+        // 에러 데이터에 메시지가 존재하면 메시지를 경고창에 출력하고 없으면 기본 메시지를 출력한다.
+        if (errorData != null && errorData.message != null) {
+          alert(errorData.message);
+        } else {
+          alert('좋아요/싫어요 취소를 실패하였습니다.');
+        }
+      });
+    }
+  </script>
+
+{% endblock %}

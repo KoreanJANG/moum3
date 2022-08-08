@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="timeline">
+    <div class="followings half">
+        <h2>게시물 검색</h2>
+        <form method="get" action="/twit/search">
+            <input type="text" name="searchText" value="{{searchText}}" />
+            <button type="submit">검색</button>
+        </form>
+        <table style="border: 1px black solid; margin-top: 10px">
+            <thead>
+            <tr>
+                <th width="10%">UserId</th>
+                <th width="10%">Type</th>
+                <th width="10%">Distributor</th>
+                <th width="10%">Publisher</th>
+                <th width="10%">Thumbnail_image</th>
+                <th width="10%">User_url</th>
+                <th width="20%">Title</th>
+            </tr>
+            </thead>
+            <tbody style="text-align: center">
+            {% for twit in twits %}
+            <tr>
+                <td> {{twit.User.id}} </td>
+                <td> {{twit.Type}} </td>
+                <td> {{twit.Distributor}} </td>
+                <td> {{twit.Publisher}} </td>
+                <td> {{twit.Thumbnail_image}} </td>
+                <td> {{twit.User_url}} </td>
+                <td> {{twit.Title}} </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+</script>
+{% endblock %}

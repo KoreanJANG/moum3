@@ -1,0 +1,103 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="timeline">
+    <div class="followings half">
+        <h2>내 컨텐트 목록</h2>
+        <table style="border: 1px black solid; margin-top: 10px">
+            <thead>
+            <tr>
+                <th width="5%">UserId</th>
+                <th width="5%">Type</th>
+                <th width="10%">Distributor</th>
+                <th width="10%">Publisher</th>
+                <th width="10%">Thumbnail_image</th>
+                <th width="10%">User_url</th>
+                <th width="15%">Title</th>
+                <th width="15%">SubTitle</th>
+                <th width="10%">공개여부</th>
+                <th width="10%">삭제</th>
+            </tr>
+            </thead>
+            <tbody style="text-align: center">
+            {% for twit in twits %}
+            <tr>
+                <td> {{twit.User.id}} </td>
+                <td> {{twit.Type}} </td>
+                <td> {{twit.Distributor}} </td>
+                <td> {{twit.Publisher}} </td>
+                <td> {{twit.Thumbnail_image}} </td>
+                <td> {{twit.User_url}} </td>
+                <td> {{twit.Title}} </td>
+                <td> {{twit.Subtitle}} </td>
+                <td onclick="changePostPublic({{twit.id}}, {{twit.Public}})">
+                    {% if twit.Public === true %} O
+                    {% else %} X
+                    {% endif %}
+                </td>
+                <td> <button onclick="deletePost({{twit.id}})">삭제</button> </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // 게시물 삭제를 서버에 요청한다.
+    function deletePost(id) {
+        // 게시물 삭제를 진행할지 확인후에 취소를 누르면 진행하지 않는다.
+        if (confirm('게시물을 삭제하시겠습니까?') === false) { return; }
+
+        axios.post('/post/delete', {
+            id: id, // 삭제할 post id
+        })
+        .then((res) => {
+            if (res.status === 200) { // 서버 요청이 정상적으로 되었으면 페이지 새로고침한다.
+                location.reload();
+            } else { // 서버 요청이 정상 응답하지 않는다면 경고창을 띄운다.
+                alert('트윗 내용 삭제를 실패하였습니다. 재시도해주세요.');
+            }
+        })
+        .catch((error) => {
+            // 에러 발생시 에러 데이터를 가져온다.
+            const errorData = error.response.data;
+            // 에러 데이터에 메시지가 존재하면 메시지를 경고창에 출력하고 없으면 기본 메시지를 출력한다.
+            if (errorData != null && errorData.message != null) {
+                alert(errorData.message);
+            } else {
+                alert('공개여부 업데이트를 실패하였습니다. 재시도해주세요.');
+            }
+        })
+    }
+
+    // 게시물 아이디와 게시물 공개 여부를 받아 서버에 요청하여 DB데이터를 변경한다.
+    async function changePostPublic(id, isPublic) {
+        // 공개 처리시일때만 부제목을 입력받는다.
+        let subTitle;
+        if (!isPublic === true) {
+            subTitle = prompt('부제목을 입력해주세요.');
+            if (subTitle == null || subTitle.length === 0) {
+                alert('부제목을 입력해야만 공개가 가능합니다.');
+                return;
+            }
+        }
+
+        axios.post('/post/change/public', {
+            id: id, // 변경할 post id
+            isPublic: !isPublic, // 공개 여부 (현재와 반대로 넣어준다. - 느낌표 용도 (https://hanamon.kr/javascript-logical-not-operator/))
+            subTitle: subTitle
+        })
+        .then((res) => {
+            if (res.status === 200) { // 서버 요청이 정상적으로 되었으면 페이지 새로고침한다.
+                location.reload();
+            } else { // 서버 요청이 정상 응답하지 않는다면 경고창을 띄운다.
+                alert('공개여부 업데이트를 실패하였습니다. 재시도해주세요.');
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+    }
+</script>
+{% endblock %}

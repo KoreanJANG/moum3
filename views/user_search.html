@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="timeline">
+    <div class="followings half">
+        <h2>사용자 검색</h2>
+        <form method="get" action="/user/search">
+            <input type="text" name="searchText" value="{{searchText}}" />
+            <button type="submit">검색</button>
+        </form>
+        <table style="border: 1px black solid; margin-top: 10px">
+            <thead>
+            <tr>
+                <th width="10%">id</th>
+                <th width="10%">userid</th>
+                <th width="10%">nick</th>
+                <th width="10%">provider</th>
+                <th width="10%">snsId</th>
+                <th width="10%">createdAt</th>
+                <th width="10%">updatedAt</th>
+            </tr>
+            </thead>
+            <tbody style="text-align: center">
+            {% for user in users %}
+            <tr>
+                <td> {{user.id}} </td>
+                <td> {{user.userid}} </td>
+                <td> {{user.nick}} </td>
+                <td> {{user.provider}} </td>
+                <td> {{user.snsId}} </td>
+                <td> {{user.createdAt}} </td>
+                <td> {{user.updatedAt}} </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+</script>
+{% endblock %}
