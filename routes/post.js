@@ -222,7 +222,7 @@ router.post('/comment/child', isLoggedIn, async (req, res) => {
   await Trendcomment.create({
     userId: userId, // 작성자 유저 아이디
     postId: postId, // 코멘트 달릴 게시물 아이디
-    content: trendcomment // 코멘트 내용
+    trend_content: trendcomment // 코멘트 내용
   });
 
   res.sendStatus(200);
@@ -245,7 +245,7 @@ router.post('/trendcomment/child', isLoggedIn, async (req, res) => {
   await Comment.create({
     userId: userId, // 작성자 유저 아이디
     postId: postId, // 코멘트 달릴 게시물 아이디
-    content: trendcomment, // 코멘트 내용
+    trend_content: trendcomment, // 코멘트 내용
     parentId: parentTrendCommentId // 대댓글의 경우 대댓글의 부모 댓글 아이디
   });
 
