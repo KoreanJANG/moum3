@@ -94,11 +94,12 @@ router.get('/', async (req, res, next) => { // Post.findAll로 해서 업로드�
       ],
     });
 
-    res.status(200).send('main', {
-      title: 'NodeBird',
-      twits: posts,  // 찾은 게시물들은 twits로 넣어준다
-      loginUserId: req.session.passport ? req.session.passport.user : null // 현재 로그인한 유저 아이디를 세션에서가져와 view로 전달한다.
-    });
+    res.status(200).send(['main', {
+      // res.render('main', {
+        title: 'NodeBird',
+        twits: posts,  // 찾은 게시물들은 twits로 넣어준다
+        loginUserId: req.session.passport ? req.session.passport.user : null // 현재 로그인한 유저 아이디를 세션에서가져와 view로 전달한다.
+      }]);
   } catch (err) {
     console.error(err);
     next(err);
@@ -148,11 +149,12 @@ router.get('/comment', async (req, res, next) => { // Post.findAll로 해서 업
       ],
     });    
 
-    res.status(200).send('main', {
-      title: 'NodeBird',
-      twits: posts,  // 찾은 게시물들은 twits로 넣어준다
-      loginUserId: req.session.passport ? req.session.passport.user : null // 현재 로그인한 유저 아이디를 세션에서가져와 view로 전달한다.
-    });
+    res.status(200).send(['main', {
+      // res.render('main', {
+        title: 'NodeBird',
+        twits: posts,  // 찾은 게시물들은 twits로 넣어준다
+        loginUserId: req.session.passport ? req.session.passport.user : null // 현재 로그인한 유저 아이디를 세션에서가져와 view로 전달한다.
+      }]);
   } catch (err) {
     console.error(err);
     next(err);
