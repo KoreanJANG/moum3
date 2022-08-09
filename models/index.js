@@ -7,6 +7,7 @@ const Hashtag = require('./hashtag');
 const Comment = require('./comment');
 const Like = require('./like');
 const Trend = require('./trend');
+const Trendcomment = require('./trendcomment')  // 
 
 const db = {};
 const sequelize = new Sequelize(
@@ -20,6 +21,7 @@ db.Hashtag = Hashtag;  // 위의 관계는 모델스안에 각각의 js 에서 �
 db.Comment = Comment;
 db.Like = Like;
 db.Trend = Trend;
+db.Trendcomment = Trendcomment;
 
 User.init(sequelize);
 Post.init(sequelize);
@@ -27,6 +29,7 @@ Hashtag.init(sequelize);
 Comment.init(sequelize);
 Like.init(sequelize);
 Trend.init(sequelize);
+Trendcomment.init(sequelize);
 
 User.associate(db);
 Post.associate(db);
@@ -34,5 +37,6 @@ Hashtag.associate(db);
 Comment.associate(db);
 Like.associate(db);
 Trend.associate(db);
+Trendcomment.associate(db);
 
 module.exports = db;
