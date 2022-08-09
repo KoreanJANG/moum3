@@ -174,7 +174,7 @@ router.post('/comment', isLoggedIn, async (req, res) => {
   const userId = req.session.passport.user;
 
   // 코멘트 생성
-  await Trendcomment.create({
+  await Comment.create({
     userId: userId, // 작성자 유저 아이디
     postId: postId, // 코멘트 달릴 게시물 아이디
     content: comment // 코멘트 내용
@@ -229,7 +229,7 @@ router.post('/comment/child', isLoggedIn, async (req, res) => {
 });
 
 /**
- * 대댓글 입력
+ * 트랜드 대댓글 입력
  */
 router.post('/trendcomment/child', isLoggedIn, async (req, res) => {
   // 게시물 아이디
@@ -414,7 +414,7 @@ const upload3 = multer();
 router.post('/trend', isLoggedIn, upload3.none(), async (req, res, next) => { 
   try {
     console.log(req.user);
-    const post = await Post.create({ // await가 있으면 위에 반드시 async가 있어야 한다 
+    const trend = await Trend.create({ // await가 있으면 위에 반드시 async가 있어야 한다 
       Trend_Thumbnail_image: req.body.Trend_Thumbnail_image,
       Trend_Title: req.body.Trend_Title,
       Trend_SubTitle: req.body.Trend_SubTitle,
