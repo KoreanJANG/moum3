@@ -1,16 +1,16 @@
 {
   "development": {
     "username": "admin",
-    "password": "zang0903!!",
-    "database": "nodebird",
-    "host": "login-lcture-fnu.cjk00gposwcb.ap-northeast-2.rds.amazonaws.com",
+    "password": "jang0107!!",
+    "database": "moum",
+    "host": "moum3.cjk00gposwcb.ap-northeast-2.rds.amazonaws.com",
     "dialect": "mysql"
   },
   "__development": {
     "username": "admin",
-    "password": "zang0903!!",
-    "database": "nodebird",
-    "host": "login-lcture-fnu.cjk00gposwcb.ap-northeast-2.rds.amazonaws.com",
+    "password": "jang0107!!",
+    "database": "moum",
+    "host": "moum3.cjk00gposwcb.ap-northeast-2.rds.amazonaws.com",
     "dialect": "mysql"
   },
   "test": {
