@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[12]:
 
 
-'''220810 ver1.11 / chromedriver 경로 = local
+'''220811 ver1.11 / chromedriver 경로 = aws
 
               수정) 1. #url accessibility check - meta og:url redirection check
                     2. http.client 설치
                     3. Distributor_key 자동 파악
+                    4. POST 방식 활용 시, soup parser를 서버에서 미설치된 lxml -> html.parser로 변경
                     
                      '''
 
@@ -27,8 +28,9 @@ import sys;
 from urllib import parse
 import http.client #라니 이거 설치!
 http.client._MAXHEADERS = 1000
+from user_agent import generate_user_agent, generate_navigator #라니 이거 설치
 
-# data - mysql DB 접속 #라니 오픈
+#data - mysql DB 접속 #라니 오픈
 try:
     db = pymysql.connect(host="login-lcture-fnu.cjk00gposwcb.ap-northeast-2.rds.amazonaws.com",
                          user='admin', password='zang0903!!', db='nodebird', charset='utf8mb4')
@@ -100,56 +102,71 @@ headers = {'user-agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/exte
 
 #url format check
 try:
-    User_url = re.findall('http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$\-@\.&+:\/?=_]|[!*\(\),]|(?:%[0-9a-zA-Z][0-9a-zA-Z]))+', User_url)[0]
-    res = requests.get(User_url, timeout=7, headers = headers) 
-except: #url 형식이 잘 못 되었을 경우 수정
-    if 'https://' in User_url:
-        try:            
-            User_url = 'http://' + User_url.replace('https://', '').replace('http://', '')
-            res = requests.get(User_url, timeout=2, headers = headers) 
-            print('User_url에 http 추가')
-        except:
-            User_url = User_url
-            print('http 포맷 체크 못함')
-    elif 'http://' in User_url:
-        try:
-            User_url = 'https://' + User_url.replace('https://', '').replace('http://', '')
-            res = requests.get(User_url, timeout=2, headers = headers) 
-            print('User_url에 https 추가')
-        except:
-            User_url = User_url
-            print('https 포맷 체크 못함')                            
-    else:
-        try:
-            User_url = 'https://' + User_url.replace('https://', '').replace('http://', '')
-            res = requests.get(User_url, timeout=2, headers = headers) 
-            print('https 새로 추가 완료')
-        except:
-            try:
-                User_url = 'http://' + User_url.replace('https://', '').replace('http://', '')
-                res = requests.get(User_url, timeout=2, headers = headers) 
-                print('http 새로 추가 완료')
-            except:
-                User_url = User_url
-                print('포맷 체크 못함')    
-                    
-finally:#접속이 안될 경우(!= 200) 헤더값 변경
+    User_url = re.findall('http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$\-@\.&+#:\/?=_]|[!*\(\),]|(?:%[0-9a-zA-Z][0-9a-zA-Z]))+', User_url)[0]
+    res = requests.get(User_url, timeout=5, headers = headers) 
+except:
     try:
-        res = requests.get(User_url, timeout=4, headers = headers)  
-    except: #headers or ip로 인한 접속 불가
-        try: #접속 자체가 불가능했던 경우
-            print("헤더값 변경 fb to my")
-            headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'}
+        headers = {'user-agent': generate_user_agent(device_type='smartphone')}
+        print("헤더값 fb -> 랜덤 변경")
+        res = requests.get(User_url, timeout=5, headers = headers) 
+        print("헤더값 fb -> 개인 변경, 접속 완료!")
+    except:
+        try:
+            print("개인 UA 설정") 
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'}
+            res = requests.get(User_url, timeout=5, headers = headers) 
             print("헤더값 변경 완료 ", res.status_code)
-        except: #headers = fb으로도 접속 불가
-            try:
-                print("랜덤 UA 설정") 
-                headers = {'user-agent': generate_user_agent(device_type='smartphone')}
-                res = requests.get(User_url, timeout=4, headers = headers) 
-                print("헤더값 변경 완료 ", res.status_code)
-            except:#headers = 랜덤으로도 접속 불가
-                print("접속 불가")
-                User_url = User_url            
+        except:#headers = 랜덤으로도 접속 불가
+            print("접속 불가")
+            User_url = User_url  
+# except: #url 형식이 잘 못 되었을 경우 비동기방식으로 사용 (현재 함께 사용하기엔 시간소요가 너무 큼)
+#     if 'https://' in User_url:
+#         try:            
+#             User_url = 'http://' + User_url.replace('https://', '').replace('http://', '')
+#             res = requests.get(User_url, timeout=2, headers = headers) 
+#             print('User_url에 http 추가')
+#         except:
+#             User_url = User_url
+#             print('http 포맷 체크 못함')
+#     elif 'http://' in User_url:
+#         try:
+#             User_url = 'https://' + User_url.replace('https://', '').replace('http://', '')
+#             res = requests.get(User_url, timeout=2, headers = headers) 
+#             print('User_url에 https 추가')
+#         except:
+#             User_url = User_url
+#             print('https 포맷 체크 못함')                            
+#     else:
+#         try:
+#             User_url = 'https://' + User_url.replace('https://', '').replace('http://', '')
+#             res = requests.get(User_url, timeout=2, headers = headers) 
+#             print('https 새로 추가 완료')
+#         except:
+#             try:
+#                 User_url = 'http://' + User_url.replace('https://', '').replace('http://', '')
+#                 res = requests.get(User_url, timeout=2, headers = headers) 
+#                 print('http 새로 추가 완료')
+#             except:
+#                 User_url = User_url
+#                 print('포맷 체크 못함')    
+                    
+# finally:#접속이 안될 경우(!= 200) 헤더값 변경
+#     try:
+#         res = requests.get(User_url, timeout=4, headers = headers)  
+#     except: #headers or ip로 인한 접속 불가
+#         try: #접속 자체가 불가능했던 경우
+#             print("헤더값 변경 fb to my")
+#             headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'}
+#             print("헤더값 변경 완료 ", res.status_code)
+#         except: #headers = fb으로도 접속 불가
+#             try:
+#                 print("랜덤 UA 설정") 
+#                 headers = {'user-agent': generate_user_agent(device_type='smartphone')}
+#                 res = requests.get(User_url, timeout=4, headers = headers) 
+#                 print("헤더값 변경 완료 ", res.status_code)
+#             except:#headers = 랜덤으로도 접속 불가
+#                 print("접속 불가")
+#                 User_url = User_url            
 
 # Naver mobile url 임의 변경
 
@@ -158,18 +175,19 @@ if 'msearch' in User_url:
     User_url = User_url.replace("https://msearch", "https://search")
 
 # url redirection 잡기
-try:
-    with urllib.request.urlopen(User_url, timeout = 3) as response:
-        User_url_red = response.geturl()
-        if 'no-access' in User_url_red:
-            User_url = User_url
-        else:
-            User_url = User_url_red
-        res = requests.get(User_url, timeout=2, headers = headers) 
-        print("Redirection된 URL은, ", User_url)        
-except:    
-    User_url = User_url
-    print("No Redirection된 URL은, ", User_url) 
+if 'skyscanner' not in User_url: 
+    try:
+        with urllib.request.urlopen(User_url, timeout = 3) as response:
+            User_url_red = response.geturl()
+            if 'no-access' in User_url_red:
+                User_url = User_url
+            else:
+                User_url = User_url_red
+            res = requests.get(User_url, timeout=2, headers = headers) 
+            print("Redirection된 URL은, ", User_url)        
+    except:    
+        User_url = User_url
+        print("No Redirection된 URL은, ", User_url) 
 
 # naver 앱 url(shorten and redirection and decode)
 if 'link.naver.com' in User_url:
@@ -221,6 +239,9 @@ if 'balaan' in User_url:
         
     print("balaan User_url은?", User_url)
     
+if 'a.co' in User_url:    
+    User_url = 'https://www.amazon.com/' + str(soup.select_one('input[name="amzn-r"]')['value'])
+    
 # url split
 
 User_url_list = re.split('\.|/|\?', User_url)
@@ -244,7 +265,8 @@ Distributor_keyword_list = ['naver', 'coupang', '11st', 'tistory', 'daangn', 'in
                            'kbchachacha', 'lfmall', 'nsmall', 'sivillage', 'ssfshop', 'ssg', 'gucci', 'cartier', 'nike', 'dabangapp',
                            'wconcept', 'thehandsome', 'dailyhotel', 'netflix', 'nbkorea', 'koreanair', 'dior', 'lotteimall',
                            'louisvuitton', 'myrealtrip', 'homeplus', 'mangoplate', 'mustit', 'moulian', 'balaan', 'burberry',
-                           'booking', 'bigo', 'saramin', 'chanel', 'pulmuone']
+                           'booking', 'bigo', 'saramin', 'chanel', 'pulmuone', 'seoulstore', 'sonohotelsresorts', 'skyscanner',
+                           'stylenoriter', 'styleshare', 'spooncast','socar']
 
 #Distributor 한글화 ( for Title 전처리 시 Distributor 한글 이름 제외 )
 
@@ -263,7 +285,9 @@ Distributor_keyword_list_Kor_dict = {'naver':'네이버', 'coupang':'쿠팡', '1
                                     'dior':'디올', 'lotteimall':'롯데홈쇼핑', 'louisvuitton':'루이 비통', 'myrealtrip':'마이리얼트립',
                                     'homeplus':'홈플러스', 'mangoplate':'망고플레이트', 'mustit':'머스트잇', 'moulian':'뮬리안',
                                     'balaan':'발란', 'burberry':'Burberry®', 'booking':'부킹닷컴', 'bigo':'비고 라이브',
-                                    'saramin':'사람인', 'chanel':'샤넬', 'pulmuone':'풀무원'}
+                                    'saramin':'사람인', 'chanel':'샤넬', 'pulmuone':'풀무원', 'seoulstore':'서울스토어',
+                                    'sonohotelsresorts':'소노호텔&리조트', 'skyscanner':'스카이스캐너', 'stylenoriter':'스타일노리터',
+                                    'styleshare':'스타일쉐어', 'spooncast':'스푼','socar':'쏘카'}
 # keyword 추가 필요
 
 # url - Distributor_keyword list match
@@ -287,7 +311,7 @@ try:
 
     else:
         try:
-            User_url_Distributor_re = re.compile('(?<=\.)(.*?)(?=\.co|.net|.me|.link|.tv)')
+            User_url_Distributor_re = re.compile('(?<=\.)(.*?)(?=\.co|.net|.me|.link|.tv|.kr)')
             Distributor_key = User_url_Distributor_re.findall(User_url)[0]    
 
             Distributor_key_split_list = re.split('\.|/|\?', Distributor_key)
@@ -301,6 +325,7 @@ try:
             Distributor_key_max_value = max(Distributor_key_dict.values())
             Distributor_key_dict_reversed= dict(map(reversed, Distributor_key_dict.items()))
             Distributor_key = Distributor_key_dict_reversed[Distributor_key_max_value]
+            print("Distributor_key_dict???", Distributor_key_dict)
         except:
             try:
                 Distributor_key = soup.select_one('meta[property="og:site_name"]')['content']                 
@@ -344,7 +369,8 @@ Category_in_keyword_list_shopping = ['11st', 'coupang', 'musinsa', 'a-bly', 'zig
                                     'ssg', 'gucci', 'cartier', 'nike','dabangapp', 'wconcept', 'thehandsome', 'shoplive',
                                     'dailyhotel', 'nbkorea', 'koreanair', 'dior', 'lotteimall', 'sflex', 'louisvuitton', 
                                      'myrealtrip', 'homeplus', 'mangoplate', 'eat_deals', 'mustit', 'musinsaapp', 'moulian',
-                                    'balaan', 'burberry', 'booking', 'hotel', 'chanel', 'pulmuone']
+                                    'balaan', 'burberry', 'booking', 'hotel', 'chanel', 'pulmuone', 'seoulstore', 'sonohotelsresorts',
+                                    'skyscanner', 'stylenoriter', 'styleshare', 'socar']
 Category_in_keyword_list_blog = ['blog', 'tistory', 'velog', 'github', 'contents', 'premium', 'post', '10000recipe', 'mangoplate',
                                 'saramin']
 Category_in_keyword_list_sns = ['instagram', 'band', 'facebook']
@@ -353,7 +379,7 @@ Category_in_keyword_list_second = ['daangn', 'joonggonara', 'joongna', 'bunjang'
 Category_in_keyword_list_cafe = ['cafe']
 Category_in_keyword_list_news = ['news', 'joongang', 'yna', 'weather', 'entertain', 'wikipedia']
 Category_in_keyword_list_images = ['img', 'jpg', 'png', 'jpeg']
-Category_in_keyword_list_enter = ['book', 'music', 'music-flo']
+Category_in_keyword_list_enter = ['book', 'music', 'music-flo', 'spooncast']
 Category_in_keyword_list_map = ['map', 'maps', 'tmap', 'place']
 
 #수동분류 9개 항목
@@ -1169,12 +1195,8 @@ try:
         }
 
         res = requests.post(User_url_nsmall_api, headers=headers, data =  payload, timeout = 10) 
-
-        content = res.content
-        soup = BeautifulSoup(content,"lxml")
-
-        post_api = soup.text
-        dict_post_api = json.loads(post_api)
+        soup = BeautifulSoup(res.content,"html.parser")
+        dict_post_api = json.loads(soup.text)
         
         Title_key = dict_post_api['msg']['goods'][0]['info']['productName']
         Description_key = dict_post_api['msg']['goods'][0]['info']['productName']
@@ -1736,12 +1758,8 @@ try:
         }
 
         res = requests.post(User_url_pulmuone_api, headers=headers, data =  payload, timeout = 10) 
-
-        content = res.content
-        soup = BeautifulSoup(content,"lxml")
-
-        post_api = soup.text
-        dict_post_api = json.loads(post_api)
+        soup = BeautifulSoup(res.content,"html.parser")
+        dict_post_api = json.loads(soup.text)
         
         try:
             Title_key = dict_post_api['data']['goodsName']
@@ -1766,7 +1784,6 @@ try:
     elif 'seoulstore' in User_url:
         product_id_seoulstore_re = re.compile('(?<=products\/)[0-9]+')
         product_id_seoulstore = product_id_seoulstore_re.findall(User_url)[0]
-        print(product_id_seoulstore)
         User_url_seoulstore_api = 'https://www.seoulstore.com/api/do/getProduct'
 
         headers = {
@@ -1786,19 +1803,13 @@ try:
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest'
         }
-
         payload = {
         'id': product_id_seoulstore, #product_id
         'method': 'getProduct'
         }
-
         res = requests.post(User_url_seoulstore_api, headers=headers, data =  payload, timeout = 10) 
-        content = res.content
-        soup = BeautifulSoup(content,"lxml")
-        post_api = soup.text
-        dict_post_api = json.loads(post_api)
-
-    #     print(dict_post_api)
+        soup = BeautifulSoup(res.content,"html.parser")
+        dict_post_api = json.loads(soup.text)
         try:
             Title_key = dict_post_api['descriptions']['name']
         except:
@@ -1820,20 +1831,103 @@ try:
                 Thumbnail_image_key = dict_post_api['images']['list']
             except:
                 Thumbnail_image_key = Thumbnail_image_key
+
+    elif 'skyscanner' in User_url:
+        try: # 호텔
+            Thumbnail_image_key = soup.select_one('link[as="image"]')['href']
+        except:
+            Thumbnail_image_key = 'https://www.skyscanner.co.kr/sttc/blackbird/opengraph_solid_logo.png'
+
+    elif 'stylenoriter' in User_url:  
         try:
-            Lower_price_key = dict_post_api['discountPrice']
+            Title_key = soup.select_one('meta[property="og:title"]')['content']
         except:
             try:
-                Lower_price_key = dict_post_api['sellingPrice']
+                script_re = re.compile('(?<=content_name: ).+(?=,)')
+                Title_key = script_re.findall(str(soup))[0]
             except:
-                try:
-                    Lower_price_key = dict_post_api['sortPrice']
-                except:
-                    try:
-                        Lower_price_key = dict_post_api['salePrice']  
-                    except:
-                        Lower_price_key = Lower_price_key
-                        
+                Title_key = Title_key
+        try:
+            Thumbnail_image_key = soup.select_one('img.bigImage')['src']
+        except:
+            try:
+                Thumbnail_image_key = '	https://stylenoriter.co.kr' + Thumbnail_image_key
+            except:
+                Thumbnail_image_key = Thumbnail_image_key
+
+    elif 'styleshare' in User_url:  
+        product_id_re = re.compile('(?<=goods\/)[0-9]+')
+        product_id = product_id_re.findall(User_url)[0]
+        User_url_api = 'https://shop-gateway.styleshare.kr/display/api/v1/goods/' + str(product_id)
+
+        res_api = requests.get(User_url_api, timeout=3, headers = headers) 
+        result_dict = json.loads(res_api.text)
+        try:
+            Title_key = result_dict['name']
+        except:
+            Title_key = Title_key
+            
+    elif 'adidas' in User_url:  
+        script = soup.select_one('script[type="application/ld+json"]').text
+        dict_result_script_text = json.loads(str(script))
+        try:
+            Title_key = dict_result_script_text['name']
+        except:
+            Title_key = Title_key
+        try:
+            Description_key = dict_result_script_text['description']
+        except:
+            Description_key = Description_key
+        try:
+            Thumbnail_image_key = dict_result_script_text['image'][0]
+        except:
+            Thumbnail_image_key = Thumbnail_image_key
+
+    elif 'amazon' in User_url:  
+        
+#         chromedriver = 'D:\moEum\nodejs-book-master\ch9\9.5.7_공개컨텐츠 퍼오기\nodebird_web'  # 윈도우 / 로컬
+        chromedriver = '/home/ec2-user/MoEum2/nodebird' # AWS EC2 / 서버 #라니 오픈
+#         chromedriver = 'C:/Users/FNUCNI/chromedriver.exe'
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument('disable-gpu')
+        options.add_argument('User-Agent: facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)')
+        options.add_argument('lang = ko_KR')
+
+        driver = webdriver.Chrome(chromedriver, options=options)
+
+        driver.get(User_url)
+
+        res = driver.page_source
+
+        soup = BeautifulSoup(res, 'html.parser')
+
+        script_re = re.compile('(?<=jQuery.parseJSON\(\').+(?=\'\);)')
+        script_text = script_re.findall(str(soup))[0]
+        dict_result_script_text = json.loads(script_text) 
+
+        try:
+            Title_key = soup.select_one('meta[name="title"]')['content']
+        except:
+            try:
+                Title_key = dict_result_script_text['title']
+            except:
+                Title_key = Title_key
+
+        try:
+            Description_key = soup.select_one('meta[name="description"]')['content']
+        except:
+            try:
+                Description_key = dict_result_script_text['title']
+            except:
+                Description_key = Description_key
+
+        try:
+            Thumbnail_image_key = soup.select_one('div.imgTagWrapper img')['src']
+        except:
+            Thumbnail_image_key = Thumbnail_image_key
+            
+#3요소
 except:
     Title_key = Title_key
     Description_key = Description_key
@@ -2578,7 +2672,57 @@ if Type_key == '위시':
                             Lower_price_key = dict_post_api['data']['recommendedPrice']
                         except:
                             Lower_price_key = Lower_price_key
+                            
+        elif Distributor_key in ['seoulstore']:                        
+            try:
+                Lower_price_key = dict_post_api['discountPrice']
+            except:
+                try:
+                    Lower_price_key = dict_post_api['sellingPrice']
+                except:
+                    try:
+                        Lower_price_key = dict_post_api['sortPrice']
+                    except:
+                        try:
+                            Lower_price_key = dict_post_api['salePrice']  
+                        except:
+                            Lower_price_key = Lower_price_key
+
+        elif Distributor_key in ['stylenoriter']:  
+            try:
+                Lower_price_key = soup.select_one('meta[property="product:sale_price:amount"]')['content']
+            except:
+                try:
+                    script_re = re.compile('(?<=product_sale_price = )[0-9]+')
+                    Lower_price_key = script_re.findall(str(soup))[0]
+                except:
+                    Lower_price_key = Lower_price_key
+
+        elif Distributor_key in ['styleshare']:  
+            try:
+                Lower_price_key = result_dict['lowestCouponInfo']['couponPrice']
+            except:
+                try:
+                    Lower_price_key = result_dict['price']
+                except:
+                    try:
+                        Lower_price_key = result_dict['optionInfo']['options'][0]['price']
+                    except:
+                        Lower_price_key = Lower_price_key
                         
+        elif Distributor_key in ['adidas']:                          
+            try:
+                Lower_price_key = dict_result_script_text['offers']['price']
+            except:
+                Lower_price_key = Lower_price_key
+                
+        elif Distributor_key in ['amazon']:                  
+            try:
+                Lower_price_key = soup.select_one('input#twister-plus-price-data-price')['value']
+            except:
+                Lower_price_key = Lower_price_key
+            driver.quit()
+#최저가
         # Hosting 주요 3개사 지정
 
         else:
@@ -2865,4 +3009,10 @@ db.close()
 # print("save complete")
 
 # db.close()
+
+
+# In[ ]:
+
+
+
 
