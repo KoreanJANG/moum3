@@ -3,21 +3,11 @@ const Sequelize = require('sequelize');
 module.exports = class Post extends Sequelize.Model {
   static init(sequelize) {
     return super.init({
-      content: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-      },
-      img: {  // 이미지 한 개 만 올릴수 있게 만든다. 
-        type: Sequelize.STRING(100),
-        allowNull: true,
-      },
-
       // 중요!!!! 여기서 부터는 우리가 가져오려는 컨텐츠에 관련된 db이다. 우리의 컬럼을 참고하라 
       Type : {
         type: Sequelize.STRING(100),
         allowNull: true,  // 널을 허락한다 
       },
-
       Category_in : {
         type: Sequelize.STRING(100),
         allowNull: true,
@@ -182,6 +172,14 @@ module.exports = class Post extends Sequelize.Model {
         type: Sequelize.STRING(100),
         allowNull: true,
       },
+      Mymemo : {
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
+      MyThema :{
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      }, 
 
     }, {
       sequelize,
@@ -199,6 +197,6 @@ module.exports = class Post extends Sequelize.Model {
 
   static associate(db) {
     db.Post.belongsTo(db.User); //게시글은 유저에 속한다. 헤즈매니하고 벨롱스투 는 같이 써주면 안햇갈린다 
-    db.Post.belongsToMany(db.Hashtag, { through: 'PostHashtag' });//다:다 관계일때 쓴다. through를 써서 중간 테이블을 정의 
+    // db.Post.belongsToMany(db.Hashtag, { through: 'PostHashtag' });   다:다 관계일때 쓴다. through를 써서 중간 테이블을 정의 
   }
 };
